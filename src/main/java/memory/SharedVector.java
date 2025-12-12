@@ -75,7 +75,7 @@ public class SharedVector {
         other.readLock();
         
         // ask if we need to implement exceptions
-        for(int index=0; index<length(); index++){
+        for(int index=0; index<this.length(); index++){
             vector[index] = this.get(index) + other.get(index);
         }
         
@@ -87,8 +87,8 @@ public class SharedVector {
         // TODO: negate vector
         writeLock();
 
-        for(int index=0; index<length(); index++){
-            vector[index] = (-1) * this.get(index);
+        for(int index=0; index<this.length(); index++){
+            vector[index] = (-1) * this.vector[index];
         }
         
         writeUnlock();
@@ -99,8 +99,8 @@ public class SharedVector {
         double sum = 0;
         this.readLock();
         other.readLock();
-        for(int index=0; index<length(); index++){
-            sum += this.get(index) * other.get(index); 
+        for(int index=0; index<this.length(); index++){
+            sum += this.vector[index] * other.vector[index]; 
         }
         other.readUnlock();
         this.readUnlock();
