@@ -76,7 +76,7 @@ public class SharedVector {
         
         // ask if we need to implement exceptions
         for(int index=0; index<this.length(); index++){
-            vector[index] = this.get(index) + other.get(index);
+            vector[index] = this.vector[index] + other.vector[index];
         }
         
         other.readUnlock();
@@ -117,5 +117,19 @@ public class SharedVector {
         }
         this.vector = new_vector;
         this.writeUnlock();
+    }
+
+    // Helper Functions:
+
+    public double[] get_vector_as_array(){
+        double[] out = new double[vector.length];
+        readLock();
+
+        for(int i=0; i<vector.length;i++){
+            out[i] = vector[i];
+        }
+        
+        readUnlock();
+        return out;
     }
 }
