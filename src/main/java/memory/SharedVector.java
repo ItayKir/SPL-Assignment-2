@@ -15,6 +15,9 @@ public class SharedVector {
 
     public double get(int index) {
         // TODO: return element at index (read-locked)
+        if(index < 0 || index >= vector.length){
+            throw new ArrayIndexOutOfBoundsException("index out of bounds");
+        }
         readLock();
         double vector_value = vector[index];
         readUnlock();
@@ -71,10 +74,19 @@ public class SharedVector {
 
     public void add(SharedVector other) {
         // TODO: add two vectors
-        writeLock();
+        if(other == null){
+            throw new IllegalArgumentException("Other vector is null");
+        }
+
         other.readLock();
+        if (this.vector.length != other.vector.length) {
+            other.readUnlock();
+            throw new IllegalArgumentException("Illegal operation: dimensions mismatch");
+        }
+
+        writeLock();
         
-        // ask if we need to implement exceptions
+        
         for(int index=0; index<this.length(); index++){
             vector[index] = this.vector[index] + other.vector[index];
         }
