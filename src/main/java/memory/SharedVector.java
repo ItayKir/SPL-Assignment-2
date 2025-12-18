@@ -72,27 +72,42 @@ public class SharedVector {
         writeUnlock();
     }
 
-    public void add(SharedVector other) {
-        // TODO: add two vectors
-        if(other == null){
-            throw new IllegalArgumentException("Other vector is null");
-        }
-
+    /*
+    * Helper function to check dimensions
+    */
+    private void checkDimensions(SharedVector other){
         other.readLock();
+        this.readUnlock();
         if (this.vector.length != other.vector.length) {
             other.readUnlock();
+            this.readUnlock();
             throw new IllegalArgumentException("Illegal operation: dimensions mismatch");
-        }
+        }       
+    }
 
-        writeLock();
-        
+    /*
+    * Helper function to check if other is null
+    */
+    private void checkNullVector(SharedVector other){
+        if (other== null) {
+            throw new IllegalArgumentException("Other vector is null");
+        }       
+    }
+
+    public void add(SharedVector other) {
+        // TODO: add two vectors
+        checkNullVector(other);
+        checkDimensions(other);
+
+        other.readLock();
+        this.writeLock();
         
         for(int index=0; index<this.length(); index++){
             vector[index] = this.vector[index] + other.vector[index];
         }
         
         other.readUnlock();
-        writeUnlock();
+        this.writeUnlock();
     }
 
     public void negate() {
@@ -108,9 +123,12 @@ public class SharedVector {
 
     public double dot(SharedVector other) {
         // TODO: compute dot product (row · column)
+        checkNullVector(other);
+        checkDimensions(other);
         double sum = 0;
-        this.readLock();
+        
         other.readLock();
+        this.writeLock();
         for(int index=0; index<this.length(); index++){
             sum += this.vector[index] * other.vector[index]; 
         }

@@ -39,11 +39,26 @@ public class SharedMatrix {
 
     public double[][] readRowMajor() {
         // TODO: return matrix contents as a row-major double[][]
-        double[][] out = new double[vectors.length][];
+        double[][] out;
         acquireAllVectorReadLocks(vectors);
-        for(int i=0; i < vectors.length;i++){
-            out[i] = vectors[i].get_vector_as_array();
+        if(getOrientation()== VectorOrientation.ROW_MAJOR){
+            out = new double[vectors.length][];
+            for(int i=0; i < vectors.length; i++){
+                out[i] = vectors[i].get_vector_as_array();
+            }
         }
+        else{
+            out = new double[vectors[0].length()][];
+            for(int i=0; i <vectors[0].length(); i++){
+                double[] rowArray = new double[vectors.length]; 
+                for(int j=0; j < vectors.length; j++){
+                    rowArray[i] = vectors[j].get(i);
+                }
+            }
+
+
+        }
+
         releaseAllVectorReadLocks(vectors);
         return out;
     }
@@ -63,7 +78,7 @@ public class SharedMatrix {
 
     public VectorOrientation getOrientation() {
         // TODO: return orientation
-        // Assuming all vecotrs inside the matrix are of the same orientation
+        // Assuming all vecotrs inside the matrix are of the same orientation...
         acquireAllVectorReadLocks(vectors);
         VectorOrientation orientation = vectors[0].getOrientation();
         releaseAllVectorReadLocks(vectors);
