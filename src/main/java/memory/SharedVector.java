@@ -131,6 +131,8 @@ public class SharedVector {
 
     public double dot(SharedVector other) {
         // TODO: compute dot product (row · column)
+        checkNullVector(other);
+        checkDimensions(other);
         double sum = 0;
         try{
             this.readLock();
