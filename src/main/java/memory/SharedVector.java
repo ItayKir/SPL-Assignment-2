@@ -18,26 +18,38 @@ public class SharedVector {
         if(index < 0 || index >= vector.length){
             throw new ArrayIndexOutOfBoundsException("index out of bounds");
         }
-        readLock();
-        double vector_value = vector[index];
-        readUnlock();
-        return vector_value;
+        try{
+            readLock();
+            double vector_value = vector[index];
+            return vector_value;
+        }
+        finally{
+            readUnlock();
+        }
     }
 
     public int length() {
         // TODO: return vector length
-        readLock();
-        int length = vector.length;
-        readUnlock();
-        return length;
+        try{
+            readLock();
+            int length = vector.length;
+            return length;
+        }
+        finally{
+            readUnlock();
+        }
     }
 
     public VectorOrientation getOrientation() {
         // TODO: return vector orientation
-        readLock();
-        VectorOrientation return_orientation = this.orientation;
-        readUnlock();
-        return return_orientation;
+        try{
+            readLock();
+            VectorOrientation return_orientation = this.orientation;
+            return return_orientation;
+        }
+        finally{
+            readUnlock();
+        }
     }
 
     public void writeLock() {
@@ -62,14 +74,18 @@ public class SharedVector {
 
     public void transpose() {
         // TODO: transpose vector
-        writeLock();
-        if(orientation == VectorOrientation.COLUMN_MAJOR){
-            orientation = VectorOrientation.ROW_MAJOR;
+        try{
+            writeLock();
+            if(orientation == VectorOrientation.COLUMN_MAJOR){
+                orientation = VectorOrientation.ROW_MAJOR;
+            }
+            else{
+                orientation = VectorOrientation.COLUMN_MAJOR;
+            }
         }
-        else{
-            orientation = VectorOrientation.COLUMN_MAJOR;
+        finally{
+            writeUnlock();
         }
-        writeUnlock();
     }
 
     public void add(SharedVector other) {
@@ -78,70 +94,102 @@ public class SharedVector {
             throw new IllegalArgumentException("Other vector is null");
         }
 
-        other.readLock();
-        if (this.vector.length != other.vector.length) {
-            other.readUnlock();
-            throw new IllegalArgumentException("Illegal operation: dimensions mismatch");
-        }
+        try{
+            other.readLock();
+            if (this.vector.length != other.vector.length) {
+                other.readUnlock();
+                throw new IllegalArgumentException("Illegal operation: dimensions mismatch");
+            }
 
-        writeLock();
-        
-        
-        for(int index=0; index<this.length(); index++){
-            vector[index] = this.vector[index] + other.vector[index];
+            writeLock();
+            
+            
+            for(int index=0; index<this.length(); index++){
+                vector[index] = this.vector[index] + other.vector[index];
+            }
         }
-        
-        other.readUnlock();
-        writeUnlock();
+        finally{
+            other.readUnlock();
+            writeUnlock();
+        }
     }
 
     public void negate() {
         // TODO: negate vector
-        writeLock();
+        try{
+            writeLock();
 
-        for(int index=0; index<this.length(); index++){
-            vector[index] = (-1) * this.vector[index];
-        }
+            for(int index=0; index<this.length(); index++){
+                vector[index] = (-1) * this.vector[index];
+            }
         
-        writeUnlock();
+        }
+        finally{
+            writeUnlock();
+        }
     }
 
     public double dot(SharedVector other) {
         // TODO: compute dot product (row · column)
         double sum = 0;
-        this.readLock();
-        other.readLock();
-        for(int index=0; index<this.length(); index++){
-            sum += this.vector[index] * other.vector[index]; 
+        try{
+            this.readLock();
+            other.readLock();
+            for(int index=0; index<this.length(); index++){
+                sum += this.vector[index] * other.vector[index]; 
+            }
+            return sum;
         }
-        other.readUnlock();
-        this.readUnlock();
-        return sum;
+        finally{
+            other.readUnlock();
+            this.readUnlock();
+        }
     }
 
     public void vecMatMul(SharedMatrix matrix) {
         // TODO: compute row-vector × matrix
-        // add validation - matrix must be column_major!
-        double[] new_vector = new double[matrix.length()];
-        this.writeLock();
-        for(int index = 0; index < matrix.length(); index++){
-            new_vector[index] = this.dot(matrix.get(index));
+        if(matrix == null){
+            throw new IllegalArgumentException("Provided Matrix is null");
         }
-        this.vector = new_vector;
-        this.writeUnlock();
+        try{
+            this.writeLock();
+            
+            double[][] column_matrix = matrix.readColumnMajor();
+            double[] new_vector = new double[matrix.length()];
+
+            if(column_matrix.length==0){
+                this.vector = new_vector;
+                return; // Matrix is empty...
+            }
+
+            for(int row=0;row < this.vector.length; row++){
+                for(int col=0; col < column_matrix.length; col++){
+                    new_vector[col] += this.vector[row] * column_matrix[col][row]; 
+                }
+            }
+            this.vector = new_vector;
+
+        }
+        finally{
+            this.writeUnlock();
+        }
     }
 
     // Helper Functions:
 
     public double[] get_vector_as_array(){
-        double[] out = new double[vector.length];
-        readLock();
+        try{
+            readLock();
 
-        for(int i=0; i<vector.length;i++){
-            out[i] = vector[i];
+            double[] out = new double[vector.length];
+            for(int i=0; i<vector.length;i++){
+                out[i] = vector[i];
+            }
+
+            return out;
         }
-        
-        readUnlock();
-        return out;
+        finally{
+            readUnlock();
+        }
     }
 }
