@@ -191,8 +191,9 @@ public class SharedVector {
 
                     SharedVector row = matrix.get(i);
                     row.readLock();
+                    int rowLength = row.length();
                     try{
-                        for(int j=0; j < row.length(); j++){
+                        for(int j=0; j < rowLength; j++){
                             new_vector[j] += vectorValue * row.get(j);
                         }
                     }
