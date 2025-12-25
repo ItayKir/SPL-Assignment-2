@@ -132,9 +132,13 @@ public class SharedVector {
     public double dot(SharedVector other) {
         // TODO: compute dot product (row · column)
         double sum = 0;
+        if(other == null){
+            throw new IllegalArgumentException("other vector is null");
+        }
         try{
             this.readLock();
             other.readLock();
+
             for(int index=0; index<this.length(); index++){
                 sum += this.vector[index] * other.vector[index]; 
             }
