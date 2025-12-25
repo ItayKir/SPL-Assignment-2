@@ -16,24 +16,31 @@ public class SharedMatrix {
 
     public void loadRowMajor(double[][] matrix) {
         // TODO: replace internal data with new row-major matrix
-        acquireAllVectorWriteLocks(vectors);
-        vectors = new SharedVector[matrix.length];
-        for(int i = 0; i < matrix.length; i++){
-            vectors[i] = new SharedVector(matrix[i], VectorOrientation.ROW_MAJOR);
-        }
-
-        releaseAllVectorWriteLocks(vectors);
+        loadMatrix(matrix, VectorOrientation.ROW_MAJOR);
     }
 
     public void loadColumnMajor(double[][] matrix) {
-        acquireAllVectorWriteLocks(vectors);
+        loadMatrix(matrix, VectorOrientation.COLUMN_MAJOR);
+    }
 
-        vectors = new SharedVector[matrix.length];
-        for(int i = 0; i < matrix.length; i++){
-            vectors[i] = new SharedVector(matrix[i], VectorOrientation.COLUMN_MAJOR);
+    /*
+    * Helper funciton: gets matrix and loads it, replacing current data. Sets orientation as well.
+     */
+    public void loadMatrix(double[][] matrix, VectorOrientation matrixOrientation){
+        SharedVector[] oldVectors = this.vectors;
+
+        acquireAllVectorWriteLocks(vectors);
+        try{
+            SharedVector[] newVectors = new SharedVector[matrix.length];
+            for(int i = 0; i < matrix.length; i++){
+                newVectors[i] = new SharedVector(matrix[i], matrixOrientation);
+            }
+
+            this.vectors = newVectors;
         }
-        
-        releaseAllVectorWriteLocks(vectors);
+        finally{
+            releaseAllVectorWriteLocks(oldVectors);
+        } 
     }
 
     public double[][] readRowMajor() {
@@ -116,10 +123,7 @@ public class SharedMatrix {
 
     public SharedVector get(int index) {
         // TODO: return vector at index
-        vectors[index].readLock();
-        SharedVector vec = vectors[index];
-        vectors[index].readUnlock();
-        return vec;
+        return vectors[index];
     }
 
     public int length() {

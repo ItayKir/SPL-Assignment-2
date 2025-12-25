@@ -93,23 +93,24 @@ public class SharedVector {
         if(other == null){
             throw new IllegalArgumentException("Other vector is null");
         }
-
+        writeLock();
         try{
             other.readLock();
-            if (this.vector.length != other.vector.length) {
-                other.readUnlock();
-                throw new IllegalArgumentException("Illegal operation: dimensions mismatch");
-            }
+            try{
+                if (this.vector.length != other.length()) {
+                    other.readUnlock();
+                    throw new IllegalArgumentException("Illegal operation: dimensions mismatch");
+                }
 
-            writeLock();
-            
-            
-            for(int index=0; index<this.length(); index++){
-                vector[index] = this.vector[index] + other.vector[index];
+                for(int index=0; index<this.vector.length; index++){
+                    vector[index] = this.vector[index] + other.vector[index];
+                }
+            }
+            finally{
+                other.readUnlock();
             }
         }
         finally{
-            other.readUnlock();
             writeUnlock();
         }
     }
@@ -155,21 +156,52 @@ public class SharedVector {
         if(matrix == null){
             throw new IllegalArgumentException("Provided Matrix is null");
         }
+
+        this.writeLock();
+
         try{
-            this.writeLock();
+
+            int matrixLength = matrix.length();
+            if(matrixLength == 0){
+                return;
+            }        
             
-            double[][] column_matrix = matrix.readColumnMajor();
-            double[] new_vector = new double[matrix.length()];
-
-            if(column_matrix.length==0){
-                this.vector = new_vector;
-                return; // Matrix is empty...
-            }
-
-            for(int row=0;row < this.vector.length; row++){
-                for(int col=0; col < column_matrix.length; col++){
-                    new_vector[col] += this.vector[row] * column_matrix[col][row]; 
+            double[] new_vector;
+            
+            if(matrix.getOrientation() == VectorOrientation.COLUMN_MAJOR){
+                if(vector.length != matrix.get(0).length()){
+                    throw new IllegalArgumentException("Illegal operation: dimensions mismatch");
                 }
+
+                new_vector = new double[matrixLength];
+                for(int i =0; i<matrixLength; i++){
+                    SharedVector matrixColumn = matrix.get(i);
+                    new_vector[i] = this.dot(matrixColumn);
+                }
+            }
+            else{
+                if(vector.length != matrixLength){
+                    throw new IllegalArgumentException("Illegal operation: dimensions mismatch");
+                }
+
+                new_vector = new double[matrix.get(0).length()];
+                for(int i=0; i<matrixLength; i++){
+                    double vectorValue = this.get(i);
+                    if(vectorValue==0) continue;
+
+                    SharedVector row = matrix.get(i);
+                    row.readLock();
+                    try{
+                        for(int j=0; j < row.length(); j++){
+                            new_vector[j] += vectorValue * row.get(j);
+                        }
+                    }
+                    finally{
+                        row.readUnlock();
+                    }
+
+                }
+
             }
             this.vector = new_vector;
 
@@ -178,6 +210,7 @@ public class SharedVector {
             this.writeUnlock();
         }
     }
+
 
     // Helper Functions:
 
