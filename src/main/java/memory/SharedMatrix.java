@@ -108,18 +108,6 @@ public class SharedMatrix {
                 new_row[i] = vectors[j].get(i);
             }
         }
-        else{
-            out = new double[vectors[0].length()][];
-            for(int i=0; i <vectors[0].length(); i++){
-                double[] rowArray = new double[vectors.length]; 
-                for(int j=0; j < vectors.length; j++){
-                    rowArray[i] = vectors[j].get(i);
-                }
-            }
-
-
-        }
-
         releaseAllVectorReadLocks(vectors);
         return out;
     }
@@ -141,7 +129,7 @@ public class SharedMatrix {
 
     public VectorOrientation getOrientation() {
         // TODO: return orientation
-        // Assuming all vecotrs inside the matrix are of the same orientation...
+        // Assuming all vecotrs inside the matrix are of the same orientation
         acquireAllVectorReadLocks(vectors);
         VectorOrientation orientation = vectors[0].getOrientation();
         releaseAllVectorReadLocks(vectors);
