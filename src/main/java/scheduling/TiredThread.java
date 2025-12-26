@@ -5,6 +5,8 @@ import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicLong;
 
+import javax.swing.text.Position;
+
 public class TiredThread extends Thread implements Comparable<TiredThread> {
 
     private static final Runnable POISON_PILL = () -> {}; // Special task to signal shutdown
@@ -56,7 +58,10 @@ public class TiredThread extends Thread implements Comparable<TiredThread> {
      * it throws IllegalStateException.
      */
     public void newTask(Runnable task) {
-       // TODO
+        // TODO
+        if (!this.alive.get()) 
+            throw new IllegalStateException("Thread is dead");
+        this.handoff.add(task);
     }
 
     /**
@@ -64,17 +69,59 @@ public class TiredThread extends Thread implements Comparable<TiredThread> {
      * Inserts a poison pill so the worker wakes up and exits.
      */
     public void shutdown() {
-       // TODO
+        // TODO
+        this.alive.set(false);
+        try{
+            this.handoff.put(POISON_PILL);
+        }
+        catch(InterruptedException e){
+            Thread.currentThread().interrupt();
+        }
     }
 
     @Override
     public void run() {
-       // TODO
+        // TODO
+        while(true){
+            try{  
+                Runnable task = handoff.take();
+                
+                long taskIdleEndTime = System.nanoTime();
+                this.timeIdle.addAndGet(taskIdleEndTime - this.idleStartTime.get());
+
+                this.busy.set(true);
+                
+                if(task==POISON_PILL){
+                    break;
+                }
+
+                long taskRunningStartTime = System.nanoTime();
+
+                task.run();
+
+                long taskRunningEndTime = System.nanoTime();
+                this.timeUsed.addAndGet(taskRunningEndTime - taskRunningStartTime);
+
+                this.idleStartTime.set(System.nanoTime());
+
+                this.busy.set(false);
+            }
+            catch(InterruptedException e){
+                return;
+            }
+
+            
+        }
     }
 
     @Override
     public int compareTo(TiredThread o) {
-        // TODO
-        return 0;
+        if(o == null){
+            throw new IllegalArgumentException("Other thread is null");
+        }
+        int compare = Double.compare(this.getFatigue(), o.getFatigue());
+        if(compare != 0)
+            return compare;
+        return Integer.compare(this.id, o.id); //This is in case both threads have the same fatigue, to solve deadlock like Meni taught (IdentityHashCode)
     }
 }

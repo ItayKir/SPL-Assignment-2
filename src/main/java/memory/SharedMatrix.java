@@ -29,7 +29,7 @@ public class SharedMatrix {
     public void loadMatrix(double[][] matrix, VectorOrientation matrixOrientation){
         SharedVector[] oldVectors = this.vectors;
 
-        acquireAllVectorWriteLocks(vectors);
+        acquireAllVectorWriteLocks(oldVectors);
         try{
             SharedVector[] newVectors = new SharedVector[matrix.length];
             for(int i = 0; i < matrix.length; i++){
