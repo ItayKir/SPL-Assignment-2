@@ -16,24 +16,13 @@ public class SharedMatrix {
 
     public void loadRowMajor(double[][] matrix) {
         // TODO: replace internal data with new row-major matrix
-        loadMatrix(matrix, VectorOrientation.ROW_MAJOR);
-    }
-
-    public void loadColumnMajor(double[][] matrix) {
-        loadMatrix(matrix, VectorOrientation.COLUMN_MAJOR);
-    }
-
-    /*
-    * Helper funciton: gets matrix and loads it, replacing current data. Sets orientation as well.
-     */
-    public void loadMatrix(double[][] matrix, VectorOrientation matrixOrientation){
         SharedVector[] oldVectors = this.vectors;
 
-        acquireAllVectorWriteLocks(vectors);
+        acquireAllVectorWriteLocks(oldVectors);
         try{
             SharedVector[] newVectors = new SharedVector[matrix.length];
             for(int i = 0; i < matrix.length; i++){
-                newVectors[i] = new SharedVector(matrix[i], matrixOrientation);
+                newVectors[i] = new SharedVector(matrix[i], VectorOrientation.ROW_MAJOR);
             }
 
             this.vectors = newVectors;
@@ -57,22 +46,6 @@ public class SharedMatrix {
         }
     }
 
-    /**
-    * Helper Function
-    * @return 2 dimension array, each element in array is a column in the matrix
-    */
-    public double[][] readColumnMajor() {
-        try{
-            acquireAllVectorReadLocks(vectors);
-            if(this.vectors[0].getOrientation() == VectorOrientation.COLUMN_MAJOR){
-                return this.readMatrix();
-            }
-            return this.readOppositeMatrix();
-        }
-        finally{
-            releaseAllVectorReadLocks(vectors);
-        }
-    }
 
     /**
      * Helper Function: Regardles of orientation, return the matrix
@@ -134,14 +107,12 @@ public class SharedMatrix {
     public VectorOrientation getOrientation() {
         // TODO: return orientation
         // Assuming all vecotrs inside the matrix are of the same orientation
-        acquireAllVectorReadLocks(vectors);
-        VectorOrientation orientation = vectors[0].getOrientation();
-        releaseAllVectorReadLocks(vectors);
-        return orientation;
+        return vectors[0].getOrientation();
     }
 
-    /*
-    * Helper function to make the code cleaner
+    /**
+    * Helper function: returns true if matrix is empty
+    * @return boolean
     */
     public boolean isEmpty(){
         return this.length()==0;
