@@ -31,7 +31,7 @@ public class TiredExecutor {
     private double calculateRandomFatigueFactor(){
         double upperValue = 1.5;
         double lowerValue = 0.5; // I would have set it at as const fields in the class but I think it is not allowed :)
-        return Math.random() * ((upperValue - lowerValue) + 1) + lowerValue ;
+        return Math.random() * (upperValue - lowerValue) + lowerValue ;
     }
 
     public void submit(Runnable task) {

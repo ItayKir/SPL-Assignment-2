@@ -98,7 +98,6 @@ public class SharedVector {
             other.readLock();
             try{
                 if (this.vector.length != other.length()) {
-                    other.readUnlock();
                     throw new IllegalArgumentException("Illegal operation: dimensions mismatch");
                 }
 
