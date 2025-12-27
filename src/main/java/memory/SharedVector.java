@@ -187,7 +187,8 @@ public class SharedVector {
                 new_vector = new double[matrix.get(0).length()];
                 for(int i=0; i<matrixLength; i++){
                     double vectorValue = this.get(i);
-                    if(vectorValue==0) continue;
+                    if(vectorValue==0) 
+                        continue; // 0 vectors dot anything is 0...
 
                     SharedVector row = matrix.get(i);
                     row.readLock();
