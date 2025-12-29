@@ -1,23 +1,30 @@
 package spl.lae;
 import java.io.IOException;
-import java.text.ParseException;
 
 import parser.*;
-import parser.OutputWriter.ResultMatrix;
+
 
 public class Main {
     public static void main(String[] args) throws IOException {
       // TODO: main
-      InputParser parser = new InputParser();
-      try{
-        ComputationNode rootNode = parser.parse("example.json");
-        int numThreads = 4;
-        LinearAlgebraEngine engine = new LinearAlgebraEngine(numThreads);
-        ComputationNode result = engine.run(rootNode);
-        OutputWriter.write(result.getMatrix(), "itay_test.json");
+      if(args.length < 3){
+        System.err.println("Requied {number of threads} {path/to/input/file} {path/to/output/file}");
+        return;
       }
-      catch(ParseException e){
-        OutputWriter.write(e.getMessage(), "itay_test.json");
+      InputParser parser = new InputParser();
+      int numThreads = Integer.parseInt(args[0]);
+      String path_to_input_file = args[1];
+      String path_to_output_file = args[2];
+      
+      try{
+        LinearAlgebraEngine engine = new LinearAlgebraEngine(numThreads);
+
+        ComputationNode rootNode = parser.parse(path_to_input_file);
+        ComputationNode result = engine.run(rootNode);
+        OutputWriter.write(result.getMatrix(), path_to_output_file);
+      }
+      catch(Exception e){
+        OutputWriter.write(e.getMessage(), path_to_output_file);
       }
     }
 }
