@@ -40,7 +40,7 @@ public class SharedMatrix {
             if(this.isEmpty()){
                 return new double[0][0];
             }
-            if(this.vectors[0].getOrientation() == VectorOrientation.ROW_MAJOR){
+            if(this.getOrientation() == VectorOrientation.ROW_MAJOR){
                 return this.readMatrix();
             }
             return this.readOppositeMatrix();
@@ -56,20 +56,13 @@ public class SharedMatrix {
      * @return two dimension doulbe array
      */
     public double[][] readMatrix(){
-        try{
-            acquireAllVectorReadLocks(vectors);
+        double[][] out = new double[vectors.length][];
 
-            double[][] out = new double[vectors.length][];
-
-            for(int i=0; i < vectors.length;i++){
-                out[i] = vectors[i].get_vector_as_array();
-            }
-            
-            return out;
+        for(int i=0; i < vectors.length;i++){
+            out[i] = vectors[i].get_vector_as_array();
         }
-        finally{
-            releaseAllVectorReadLocks(vectors);
-        }
+        
+        return out;
     }
 
     /**
@@ -89,7 +82,6 @@ public class SharedMatrix {
                 new_row[i] = vectors[j].get(i);
             }
         }
-        releaseAllVectorReadLocks(vectors);
         return out;
     }
 

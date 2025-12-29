@@ -22,13 +22,24 @@ public class LinearAlgebraEngine {
 
     public ComputationNode run(ComputationNode computationRoot) {
         // TODO: resolve computation tree step by step until final matrix is produced
-        computationRoot.associativeNesting();
-        while(computationRoot.getNodeType() != ComputationNodeType.MATRIX){
-            ComputationNode node = computationRoot.findResolvable();
-            loadAndCompute(node);
-            node.resolve(leftMatrix.readMatrix());
+        try{
+            computationRoot.associativeNesting();
+            while(computationRoot.getNodeType() != ComputationNodeType.MATRIX){
+                ComputationNode node = computationRoot.findResolvable();
+                loadAndCompute(node);
+                node.resolve(leftMatrix.readMatrix());
+            }
+
+            return computationRoot;
         }
-        return computationRoot;
+        finally{
+            try{
+                executor.shutdown();
+            }
+            catch(InterruptedException e){
+                Thread.currentThread().interrupt();
+            }
+        }
     }
 
     public void loadAndCompute(ComputationNode node) {

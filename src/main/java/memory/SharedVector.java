@@ -159,6 +159,9 @@ public class SharedVector {
         this.writeLock();
 
         try{
+            if(this.orientation==VectorOrientation.COLUMN_MAJOR){
+                throw new IllegalArgumentException("This vector is COLUMN Major. Row is required.");
+            }
 
             int matrixLength = matrix.length();
             if(matrixLength == 0){
