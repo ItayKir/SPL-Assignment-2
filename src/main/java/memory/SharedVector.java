@@ -98,7 +98,6 @@ public class SharedVector {
             other.readLock();
             try{
                 if (this.vector.length != other.length()) {
-                    other.readUnlock();
                     throw new IllegalArgumentException("Illegal operation: dimensions mismatch");
                 }
 
@@ -160,6 +159,9 @@ public class SharedVector {
         this.writeLock();
 
         try{
+            if(this.orientation==VectorOrientation.COLUMN_MAJOR){
+                throw new IllegalArgumentException("This vector is COLUMN Major. Row is required.");
+            }
 
             int matrixLength = matrix.length();
             if(matrixLength == 0){
@@ -214,21 +216,17 @@ public class SharedVector {
     }
 
 
-    // Helper Functions:
-
+/**
+ * Helper function: returning a snapshot of the vector as double[]
+ * @return double[] array
+ * @Note assuming readLock or acquireAllVectorReadLocks was ran
+ */
     public double[] get_vector_as_array(){
-        try{
-            readLock();
-
-            double[] out = new double[vector.length];
-            for(int i=0; i<vector.length;i++){
-                out[i] = vector[i];
-            }
-
-            return out;
+        double[] out = new double[vector.length];
+        for(int i=0; i<vector.length;i++){
+            out[i] = vector[i];
         }
-        finally{
-            readUnlock();
-        }
+
+        return out;
     }
 }

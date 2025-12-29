@@ -36,7 +36,11 @@ public class SharedMatrix {
         // TODO: return matrix contents as a row-major double[][]
         try{
             acquireAllVectorReadLocks(vectors);
-            if(this.vectors[0].getOrientation() == VectorOrientation.ROW_MAJOR){
+
+            if(this.isEmpty()){
+                return new double[0][0];
+            }
+            if(this.getOrientation() == VectorOrientation.ROW_MAJOR){
                 return this.readMatrix();
             }
             return this.readOppositeMatrix();
@@ -48,31 +52,21 @@ public class SharedMatrix {
 
 
     /**
-     * Helper Function: Regardles of orientation, return the matrix
+     * Helper Function: Regardles of orientation, return the matrix (non-emtpy)
      * @return two dimension doulbe array
      */
     public double[][] readMatrix(){
-        try{
-            acquireAllVectorReadLocks(vectors);
-            if(this.isEmpty()){
-                return new double[0][0];
-            }
+        double[][] out = new double[vectors.length][];
 
-            double[][] out = new double[vectors.length][];
-
-            for(int i=0; i < vectors.length;i++){
-                out[i] = vectors[i].get_vector_as_array();
-            }
-            
-            return out;
+        for(int i=0; i < vectors.length;i++){
+            out[i] = vectors[i].get_vector_as_array();
         }
-        finally{
-            releaseAllVectorReadLocks(vectors);
-        }
+        
+        return out;
     }
 
     /**
-     * Helper Function: If matrix orientation is COLUMN, return the matrix as ROW (and vice versa). The code is the same, but the field names are for ROW -> COLUMN scenario.
+     * Helper Function: If matrix orientation is COLUMN, return the matrix as ROW (and vice versa). The code is the same, but the field names are for ROW -> COLUMN scenario. (non-emtpy)
      * @return two dimension double array
      */
     public double[][] readOppositeMatrix(){
@@ -85,10 +79,10 @@ public class SharedMatrix {
         for(int i=0; i < number_of_rows;i++){
             double[] new_row = new double[number_of_cols];
             for(int j=0; j<number_of_cols;j++){
-                new_row[i] = vectors[j].get(i);
+                new_row[j] = vectors[j].get(i);
             }
+            out[i] = new_row;
         }
-        releaseAllVectorReadLocks(vectors);
         return out;
     }
 
