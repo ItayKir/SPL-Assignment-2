@@ -216,21 +216,17 @@ public class SharedVector {
     }
 
 
-    // Helper Functions:
-
+/**
+ * Helper function: returning a snapshot of the vector as double[]
+ * @return double[] array
+ * @Note assuming readLock or acquireAllVectorReadLocks was ran
+ */
     public double[] get_vector_as_array(){
-        try{
-            readLock();
-
-            double[] out = new double[vector.length];
-            for(int i=0; i<vector.length;i++){
-                out[i] = vector[i];
-            }
-
-            return out;
+        double[] out = new double[vector.length];
+        for(int i=0; i<vector.length;i++){
+            out[i] = vector[i];
         }
-        finally{
-            readUnlock();
-        }
+
+        return out;
     }
 }

@@ -79,8 +79,9 @@ public class SharedMatrix {
         for(int i=0; i < number_of_rows;i++){
             double[] new_row = new double[number_of_cols];
             for(int j=0; j<number_of_cols;j++){
-                new_row[i] = vectors[j].get(i);
+                new_row[j] = vectors[j].get(i);
             }
+            out[i] = new_row;
         }
         return out;
     }

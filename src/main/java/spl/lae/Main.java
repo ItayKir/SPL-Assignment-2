@@ -11,7 +11,7 @@ public class Main {
       InputParser parser = new InputParser();
       try{
         ComputationNode rootNode = parser.parse("example.json");
-        int numThreads = 10;
+        int numThreads = 4;
         LinearAlgebraEngine engine = new LinearAlgebraEngine(numThreads);
         ComputationNode result = engine.run(rootNode);
         OutputWriter.write(result.getMatrix(), "itay_test.json");

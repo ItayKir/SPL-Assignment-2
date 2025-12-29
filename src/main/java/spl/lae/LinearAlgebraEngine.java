@@ -34,6 +34,7 @@ public class LinearAlgebraEngine {
         }
         finally{
             try{
+                System.out.print(this.getWorkerReport());
                 executor.shutdown();
             }
             catch(InterruptedException e){
