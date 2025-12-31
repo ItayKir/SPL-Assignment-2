@@ -4,10 +4,8 @@ import parser.*;
 import memory.*;
 import scheduling.*;
 
-import java.util.Iterator;
-import java.util.LinkedList;
 import java.util.List;
-import java.util.concurrent.ForkJoinPool;
+
 
 public class LinearAlgebraEngine {
 
@@ -27,7 +25,7 @@ public class LinearAlgebraEngine {
             while(computationRoot.getNodeType() != ComputationNodeType.MATRIX){
                 ComputationNode node = computationRoot.findResolvable();
                 loadAndCompute(node);
-                node.resolve(leftMatrix.readMatrix());
+                node.resolve(leftMatrix.readRowMajor());
             }
 
             return computationRoot;
@@ -46,29 +44,60 @@ public class LinearAlgebraEngine {
     public void loadAndCompute(ComputationNode node) {
         // TODO: load operand matrices
         // TODO: create compute tasks & submit tasks to executor
-        Iterator<ComputationNode> iter = node.getChildren().iterator();
-        leftMatrix.loadRowMajor(iter.next().getMatrix());
+        List<ComputationNode> children = node.getChildren();
+
+        java.util.concurrent.atomic.AtomicReference<String> error = new java.util.concurrent.atomic.AtomicReference<>(null);
+        // error is defined like this so the first task which throws an error will update it using CAS, then other threads will not run their task
+        // and the error message that we will write to the file (in main), will be that first error 
+
+        leftMatrix.loadRowMajor(children.get(0).getMatrix()); //left matrix
+
+        List<Runnable> tasksToRun = null;
+
         switch(node.getNodeType()){
             case ComputationNodeType.NEGATE:
-                executor.submitAll(createNegateTasks());
+                tasksToRun = createNegateTasks();
                 break;
             case ComputationNodeType.TRANSPOSE:
-                executor.submitAll(createTransposeTasks());
+                tasksToRun = createTransposeTasks();
                 break;
             case ComputationNodeType.ADD:
-                rightMatrix.loadRowMajor(iter.next().getMatrix());
-                executor.submitAll(createAddTasks());
+                rightMatrix.loadRowMajor(children.get(1).getMatrix()); //right matrix
+                tasksToRun = createAddTasks();
                 break;
             case ComputationNodeType.MULTIPLY:
-                rightMatrix.loadRowMajor(iter.next().getMatrix());
-                executor.submitAll(createMultiplyTasks());
+                rightMatrix.loadRowMajor(children.get(1).getMatrix());//right matrix
+                tasksToRun = createMultiplyTasks();
                 break;               
+        }
+        
+        List<Runnable> tasksToRunWrapped = executor.createArrayListRunnables();
+
+        if(tasksToRun != null){
+            for(Runnable task: tasksToRun){
+                tasksToRunWrapped.add(() -> {
+                    if(error.get() != null)
+                        return;
+                    try{
+                        task.run();
+                    }
+                    catch(Exception e){
+                        error.compareAndSet(null, e.getMessage());
+                    }
+                });
+            }
+        }
+
+        executor.submitAll(tasksToRunWrapped);
+
+        if(error.get() != null){
+            throw new RuntimeException(error.get());
         }
     }
 
     public List<Runnable> createAddTasks() {
         // TODO: return tasks that perform row-wise addition
-        List<Runnable> runList = new LinkedList<Runnable>();
+        List<Runnable> runList = executor.createArrayListRunnables();
         for(int row =0; row < leftMatrix.length();row++){
             int i = row;
             runList.add(() -> {
@@ -80,7 +109,7 @@ public class LinearAlgebraEngine {
 
     public List<Runnable> createMultiplyTasks() {
         // TODO: return tasks that perform row × matrix multiplication
-        List<Runnable> runList = new LinkedList<Runnable>();
+        List<Runnable> runList = executor.createArrayListRunnables();
         for(int row =0; row < leftMatrix.length();row++){
             int i = row;
             runList.add(() -> {
@@ -92,7 +121,7 @@ public class LinearAlgebraEngine {
 
     public List<Runnable> createNegateTasks() {
         // TODO: return tasks that negate rows
-        List<Runnable> runList = new LinkedList<Runnable>();
+        List<Runnable> runList = executor.createArrayListRunnables();
         for(int row =0; row < leftMatrix.length();row++){
             int i = row;
             runList.add(() -> {
@@ -104,7 +133,7 @@ public class LinearAlgebraEngine {
 
     public List<Runnable> createTransposeTasks() {
         // TODO: return tasks that transpose rows
-        List<Runnable> runList = new LinkedList<Runnable>();
+        List<Runnable> runList = executor.createArrayListRunnables();
         for(int row =0; row < leftMatrix.length();row++){
             int i = row;
             runList.add(() -> {

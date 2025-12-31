@@ -2,7 +2,6 @@ package scheduling;
 
 import java.util.concurrent.PriorityBlockingQueue;
 import java.util.ArrayList;
-import java.util.Iterator;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -89,6 +88,14 @@ public class TiredExecutor {
     public synchronized String getWorkerReport() {
         // TODO: return readable statistics for each worker
         String out="";
+        double totalFatiuge = 0;
+        double fairness = 0;
+
+        for(TiredThread worker: workers){
+            totalFatiuge += worker.getFatigue();
+        }
+        double averageFatiuge = totalFatiuge/workers.length;
+
         for(TiredThread worker: workers){
             int workerID = worker.getWorkerId();
             double workerFatigue = worker.getFatigue();
@@ -98,8 +105,19 @@ public class TiredExecutor {
                 out += System.lineSeparator();
             }
             out = out + "Worker #" + workerID + ": {Fatigue: "+ workerFatigue + ", Time Used: "+WorkerTimeUsed+ ", Time Idle: "+WorkerTimeIdle+"}";
+
+            // For fairness
+            fairness += Math.pow(workerFatigue - averageFatiuge, 2);
         }
-        return out;
+        return out + System.lineSeparator() + "Fairness Score is: " + fairness;
     }
+
+    /**
+     * Helper function: Since we can't import in LAE any new libraries, will use this.
+     * @return ArrayList<Runnable>
+     */
+    public ArrayList<Runnable> createArrayListRunnables(){
+        return new ArrayList<Runnable>();
+    };
 
 }

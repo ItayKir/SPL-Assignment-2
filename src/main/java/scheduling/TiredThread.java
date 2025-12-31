@@ -5,7 +5,6 @@ import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicLong;
 
-import javax.swing.text.Position;
 
 public class TiredThread extends Thread implements Comparable<TiredThread> {
 
@@ -97,8 +96,12 @@ public class TiredThread extends Thread implements Comparable<TiredThread> {
 
                 long taskRunningStartTime = System.nanoTime();
 
-                task.run();
-
+                try{
+                    task.run();
+                }
+                catch(Exception e){
+                    System.err.println(e.getMessage());
+                }
                 long taskRunningEndTime = System.nanoTime();
                 this.timeUsed.addAndGet(taskRunningEndTime - taskRunningStartTime);
 

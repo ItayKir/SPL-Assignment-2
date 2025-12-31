@@ -15,11 +15,11 @@ public class SharedVector {
 
     public double get(int index) {
         // TODO: return element at index (read-locked)
-        if(index < 0 || index >= vector.length){
-            throw new ArrayIndexOutOfBoundsException("index out of bounds");
-        }
         try{
-            readLock();
+            readLock(); // Locking to read - we do not want the value to change while returning it (could change between if and reutrn)
+            if(index < 0 || index >= vector.length){
+               throw new ArrayIndexOutOfBoundsException("index out of bounds");
+            }
             double vector_value = vector[index];
             return vector_value;
         }
@@ -31,7 +31,7 @@ public class SharedVector {
     public int length() {
         // TODO: return vector length
         try{
-            readLock();
+            readLock(); // Locking to read - we do not send the wrong length if another thread is in the middle of updating it, maybe changing the lenght of the vector.
             int length = vector.length;
             return length;
         }
@@ -43,7 +43,7 @@ public class SharedVector {
     public VectorOrientation getOrientation() {
         // TODO: return vector orientation
         try{
-            readLock();
+            readLock(); // Locking to read - we do not send the wrong length if another thread is in the middle of updating it, maybe changing the orientation of the vector.
             VectorOrientation return_orientation = this.orientation;
             return return_orientation;
         }
@@ -75,7 +75,7 @@ public class SharedVector {
     public void transpose() {
         // TODO: transpose vector
         try{
-            writeLock();
+            writeLock(); // Locking to write - since we are updating the vector, we do not want another thread to read or write from it until we finish
             if(orientation == VectorOrientation.COLUMN_MAJOR){
                 orientation = VectorOrientation.ROW_MAJOR;
             }
@@ -95,7 +95,8 @@ public class SharedVector {
         }
         writeLock();
         try{
-            other.readLock();
+            other.readLock(); //Locking to write(this) and read (other) - we are updating (this) vector so we do not want other threads to read/write from it.
+            // we are read (other) vector so we do not want it to change while we are in the middle of calculating the result.
             try{
                 if (this.vector.length != other.length()) {
                     throw new IllegalArgumentException("Illegal operation: dimensions mismatch");
@@ -117,8 +118,7 @@ public class SharedVector {
     public void negate() {
         // TODO: negate vector
         try{
-            writeLock();
-
+            writeLock(); //Locking to write(this) - we are updating (this) vector so we do not want other threads to read/write from it.
             for(int index=0; index<this.length(); index++){
                 vector[index] = (-1) * this.vector[index];
             }
@@ -138,6 +138,7 @@ public class SharedVector {
         try{
             this.readLock();
             other.readLock();
+            // reading from both (this) and (other) vectors, we do not want the vectors to change while calculating the result.
 
             for(int index=0; index<this.length(); index++){
                 sum += this.vector[index] * other.vector[index]; 
@@ -156,7 +157,7 @@ public class SharedVector {
             throw new IllegalArgumentException("Provided Matrix is null");
         }
 
-        this.writeLock();
+        this.writeLock(); //We are updating the vector, we do not want other threads to read or write while we are changing it
 
         try{
             if(this.orientation==VectorOrientation.COLUMN_MAJOR){
