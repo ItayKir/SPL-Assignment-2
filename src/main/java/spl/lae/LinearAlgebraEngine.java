@@ -47,6 +47,8 @@ public class LinearAlgebraEngine {
         List<ComputationNode> children = node.getChildren();
 
         java.util.concurrent.atomic.AtomicReference<String> error = new java.util.concurrent.atomic.AtomicReference<>(null);
+        // error is defined like this so the first task which throws an error will update it using CAS, then other threads will not run their task
+        // and the error message that we will write to the file (in main), will be that first error 
 
         leftMatrix.loadRowMajor(children.get(0).getMatrix()); //left matrix
 
