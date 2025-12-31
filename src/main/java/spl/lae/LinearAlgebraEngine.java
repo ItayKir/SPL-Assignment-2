@@ -50,22 +50,30 @@ public class LinearAlgebraEngine {
         // error is defined like this so the first task which throws an error will update it using CAS, then other threads will not run their task
         // and the error message that we will write to the file (in main), will be that first error 
 
-        leftMatrix.loadRowMajor(children.get(0).getMatrix()); //left matrix
+        leftMatrix.loadRowMajor(children.get(0).getMatrix()); //left matrix - will always exist (if not InputPraser will catch this...)
 
         List<Runnable> tasksToRun = null;
 
         switch(node.getNodeType()){
             case ComputationNodeType.NEGATE:
+                if(children.size() != 1)
+                    throw new IllegalArgumentException("error: Negation (-) is an Unary operator, accepts only ONE operand!");
                 tasksToRun = createNegateTasks();
                 break;
             case ComputationNodeType.TRANSPOSE:
+                if(children.size() != 1)
+                    throw new IllegalArgumentException("error: Transpose (T) is an Unary operator, accepts only ONE operand!");
                 tasksToRun = createTransposeTasks();
                 break;
             case ComputationNodeType.ADD:
+                if(children.size() > 2)
+                    throw new IllegalArgumentException("error: Add (+) is a Binary operator, accepts only two operand!"); // associativeNesting() was ran: +(A, B, C) must be -> (A + B) + C)
                 rightMatrix.loadRowMajor(children.get(1).getMatrix()); //right matrix
                 tasksToRun = createAddTasks();
                 break;
             case ComputationNodeType.MULTIPLY:
+                if(children.size() > 2)
+                    throw new IllegalArgumentException("error: Multiplication (*) is a Binary operator, accepts only two operand!"); // associativeNesting() was ran: *(A, B, C) must be -> (A * B) * C)
                 rightMatrix.loadRowMajor(children.get(1).getMatrix());//right matrix
                 tasksToRun = createMultiplyTasks();
                 break;               
